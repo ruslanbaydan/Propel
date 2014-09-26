@@ -491,7 +491,7 @@ class PropelPDO extends PDO
     {
         // extending PDOStatement is only supported with non-persistent connections
         if (!$this->getAttribute(PDO::ATTR_PERSISTENT)) {
-            $this->setAttribute(PDO::ATTR_STATEMENT_CLASS, array($class, array($this)));
+            $this->setAttribute(PDO::ATTR_STATEMENT_CLASS, array($class, array(&$this)));
         } elseif (!$suppressError) {
             throw new PropelException('Extending PDOStatement is not supported with persistent connections.');
         }
@@ -637,7 +637,7 @@ class PropelPDO extends PDO
 
         // If the necessary additional parameters were given, get the debug log prefix for the log line
         if ($methodName && $debugSnapshot) {
-            $msg = $this->getLogPrefix($methodName, $debugSnapshot) . $msg;
+            $msg = $msg . "\n| " . $this->getLogPrefix($methodName, $debugSnapshot);
         }
 
         // We won't log empty messages
@@ -758,6 +758,10 @@ class PropelPDO extends PDO
 
                 case 'connection':
                     $value = $this->connectionName;
+                    break;
+
+                case 'ar':
+                    $value = $debugSnapshot['ar'];
                     break;
 
                 default:

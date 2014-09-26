@@ -102,6 +102,9 @@ class DebugPDOStatement extends PDOStatement
         $return = parent::execute($input_parameters);
 
         $sql = $this->getExecutedQueryString($input_parameters?$input_parameters:array());
+
+        $debug['ar'] = $this->rowCount();
+
         $this->pdo->log($sql, null, __METHOD__, $debug);
         $this->pdo->setLastExecutedQuery($sql);
         $this->pdo->incrementQueryCount();

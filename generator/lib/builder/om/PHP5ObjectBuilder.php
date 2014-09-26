@@ -1991,7 +1991,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         if (\$v !== null) {";
             } else {
               $script .= "
-        if (\$v !== null && is_numeric(\$v)) {";
+        if (\$v !== null && (is_numeric(\$v) || is_object(\$v))) {";
             }
 
             $script .= "
@@ -2213,6 +2213,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         if ($this->getBuildProperty("addSaveMethod")) {
             $script .= "
             \$this->resetModified();
+            \$this->resetOriginalValues();
 ";
         }
 
@@ -5261,24 +5262,26 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             $script .= "
             }
             if (\$ret) {
-                \$affectedRows = \$this->doSave(\$con" . ($reloadOnUpdate || $reloadOnInsert ? ", \$skipReload" : "") . ");
-                if (\$isInsert) {
-                    \$this->postInsert(\$con);";
-            $this->applyBehaviorModifier('postInsert', $script, "					");
-            $script .= "
-                } else {
-                    \$this->postUpdate(\$con);";
-            $this->applyBehaviorModifier('postUpdate', $script, "					");
-            $script .= "
+                if (\$affectedRows = \$this->doSave(\$con" . ($reloadOnUpdate || $reloadOnInsert ? ", \$skipReload" : "") . ")) {
+                    if (\$isInsert) {
+                        \$this->postInsert(\$con);";
+                $this->applyBehaviorModifier('postInsert', $script, "					");
+                $script .= "
+                    } else {
+                        \$this->postUpdate(\$con);";
+                $this->applyBehaviorModifier('postUpdate', $script, "					");
+                $script .= "
+                    }
+                    \$this->postSave(\$con);";
+                $this->applyBehaviorModifier('postSave', $script, "				");
+                $script .= "
+                    " . $this->getPeerClassname() . "::addInstanceToPool(\$this);
                 }
-                \$this->postSave(\$con);";
-            $this->applyBehaviorModifier('postSave', $script, "				");
-            $script .= "
-                " . $this->getPeerClassname() . "::addInstanceToPool(\$this);
             } else {
                 \$affectedRows = 0;
             }
             \$con->commit();
+            \$this->resetOriginalValues();
 
             return \$affectedRows;";
         } else {
@@ -5318,6 +5321,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             $script .= "
             \$con->commit();
             " . $this->getPeerClassname() . "::addInstanceToPool(\$this);
+            \$this->resetOriginalValues();
 
             return \$affectedRows;";
         }

@@ -58,14 +58,21 @@ class PropelMigrationManager
 
     public function getPdoConnection($datasource)
     {
-        if (!isset($this->pdoConnections[$datasource])) {
+        if (!isset($pdoConnections[$datasource])) {
             $buildConnection = $this->getConnection($datasource);
-            $buildConnection['dsn'] = str_replace("@DB@", $datasource, $buildConnection['dsn']);
+            $dsn = str_replace("@DB@", $datasource, $buildConnection['dsn']);
 
-            $this->pdoConnections[$datasource] = Propel::initConnection($buildConnection, $datasource);
+            // Set user + password to null if they are empty strings or missing
+            $username = isset($buildConnection['user']) && $buildConnection['user'] ? $buildConnection['user'] : null;
+            $password = isset($buildConnection['password']) && $buildConnection['password'] ? $buildConnection['password'] : null;
+
+            $pdo = new PDO($dsn, $username, $password);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            $pdoConnections[$datasource] = $pdo;
         }
 
-        return $this->pdoConnections[$datasource];
+        return $pdoConnections[$datasource];
     }
 
     public function getPlatform($datasource)

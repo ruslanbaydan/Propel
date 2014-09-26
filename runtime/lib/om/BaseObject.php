@@ -60,6 +60,9 @@ abstract class BaseObject
      */
     protected $virtualColumns = array();
 
+
+    protected $_originalValues = array();
+
     /**
      * Empty constructor (this allows people with their own BaseObject implementation to use its constructor)
      */
@@ -410,6 +413,22 @@ abstract class BaseObject
         }
 
         return $parser->fromArray($this->toArray(BasePeer::TYPE_PHPNAME, $includeLazyLoadColumns, array(), true));
+    }
+
+    public function valueChanged($value)
+    {
+        $method = 'get' . $value;
+        return ($this->getOriginalValue($value) !== $this->$method());
+    }
+
+    public function getOriginalValue($value)
+    {
+        return isset($this->_originalValues[$value]) ? $this->_originalValues[$value] : null;
+    }
+
+    public function resetOriginalValues()
+    {
+        $this->_originalValues = $this->toArray();
     }
 
     /**
